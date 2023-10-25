@@ -106,9 +106,9 @@ class _SessionTimeoutManagerState extends State<SessionTimeoutManager>
     // Attach Listener only if user wants to invalidate session on user inactivity
     if (widget._sessionConfig.invalidateSessionForUserInactivity != null) {
       return Listener(
-        // onPointerDown: (_) {
-        //   recordPointerEvent();
-        // },
+        onPointerDown: (_) {
+          recordPointerEvent();
+        },
         onPointerSignal: (_) {
           recordPointerEvent();
         },
