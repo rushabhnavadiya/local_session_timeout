@@ -110,12 +110,12 @@ class _SessionTimeoutManagerState extends State<SessionTimeoutManager>
     if (widget._sessionConfig.invalidateSessionForUserInactivity != null) {
       return MouseRegion(
         onHover: (PointerHoverEvent event) {
-          debugPrint('isHoverDetectionDisabled: $isHoverDetectionDisabled');
+          // debugPrint('isHoverDetectionDisabled: $isHoverDetectionDisabled');
 
           if(!isHoverDetectionDisabled){
             recordPointerEvent();
             isHoverDetectionDisabled = true;
-            Future.delayed(const Duration(seconds: 30),(){
+            Future.delayed(const Duration(seconds: 5),(){
               isHoverDetectionDisabled = false;
             });
           }
@@ -126,12 +126,12 @@ class _SessionTimeoutManagerState extends State<SessionTimeoutManager>
             recordPointerEvent();
           },
           onPointerSignal: (_) {
-            debugPrint('isScrollDetectionDisabled: $isScrollDetectionDisabled');
+            // debugPrint('isScrollDetectionDisabled: $isScrollDetectionDisabled');
 
             if(!isScrollDetectionDisabled){
               recordPointerEvent();
               isScrollDetectionDisabled = true;
-              Future.delayed(const Duration(seconds: 30),(){
+              Future.delayed(const Duration(seconds: 15),(){
                 isScrollDetectionDisabled = false;
               });
             }
