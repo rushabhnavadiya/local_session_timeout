@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'session_config.dart';
 
@@ -21,10 +22,10 @@ class SessionTimeoutManager extends StatefulWidget {
   final Duration userActivityDebounceDuration;
   const SessionTimeoutManager(
       {required sessionConfig,
-      required this.child,
-      sessionStateStream,
-      this.userActivityDebounceDuration = const Duration(seconds: 1),
-      super.key})
+        required this.child,
+        sessionStateStream,
+        this.userActivityDebounceDuration = const Duration(seconds: 1),
+        super.key})
       : _sessionConfig = sessionConfig,
         _sessionStateStream = sessionStateStream;
 
@@ -39,6 +40,8 @@ class _SessionTimeoutManagerState extends State<SessionTimeoutManager>
   bool _isListensing = false;
 
   bool _userTapActivityRecordEnabled = true;
+  bool isHoverDetectionDisabled = false;
+  bool isScrollDetectionDisabled = false;
 
   void _closeAllTimers() {
     if (_isListensing == false) {
@@ -89,7 +92,7 @@ class _SessionTimeoutManagerState extends State<SessionTimeoutManager>
             state == AppLifecycleState.paused)) {
       if (widget._sessionConfig.invalidateSessionForAppLostFocus != null) {
         _appLostFocusTimer ??= _setTimeout(
-          () => widget._sessionConfig.pushAppFocusTimeout(),
+              () => widget._sessionConfig.pushAppFocusTimeout(),
           duration: widget._sessionConfig.invalidateSessionForAppLostFocus!,
         );
       }
@@ -105,14 +108,36 @@ class _SessionTimeoutManagerState extends State<SessionTimeoutManager>
   Widget build(BuildContext context) {
     // Attach Listener only if user wants to invalidate session on user inactivity
     if (widget._sessionConfig.invalidateSessionForUserInactivity != null) {
-      return Listener(
-        onPointerDown: (_) {
-          recordPointerEvent();
+      return MouseRegion(
+        onHover: (PointerHoverEvent event) {
+          debugPrint('isHoverDetectionDisabled: $isHoverDetectionDisabled');
+
+          if(!isHoverDetectionDisabled){
+            recordPointerEvent();
+            isHoverDetectionDisabled = true;
+            Future.delayed(const Duration(seconds: 30),(){
+              isHoverDetectionDisabled = false;
+            });
+          }
         },
-        onPointerSignal: (_) {
-          recordPointerEvent();
-        },
-        child: widget.child,
+
+        child: Listener(
+          onPointerDown: (_) {
+            recordPointerEvent();
+          },
+          onPointerSignal: (_) {
+            debugPrint('isScrollDetectionDisabled: $isScrollDetectionDisabled');
+
+            if(!isScrollDetectionDisabled){
+              recordPointerEvent();
+              isScrollDetectionDisabled = true;
+              Future.delayed(const Duration(seconds: 30),(){
+                isScrollDetectionDisabled = false;
+              });
+            }
+          },
+          child: widget.child,
+        ),
       );
     }
 
@@ -128,7 +153,7 @@ class _SessionTimeoutManagerState extends State<SessionTimeoutManager>
         widget._sessionConfig.invalidateSessionForUserInactivity != null) {
       _userInactivityTimer?.cancel();
       _userInactivityTimer = _setTimeout(
-        () => widget._sessionConfig.pushUserInactivityTimeout(),
+            () => widget._sessionConfig.pushUserInactivityTimeout(),
         duration: widget._sessionConfig.invalidateSessionForUserInactivity!,
       );
 
@@ -141,7 +166,7 @@ class _SessionTimeoutManagerState extends State<SessionTimeoutManager>
 
       Timer(
         widget.userActivityDebounceDuration,
-        () {
+            () {
           if (mounted) {
             _userTapActivityRecordEnabled = true;
           }
