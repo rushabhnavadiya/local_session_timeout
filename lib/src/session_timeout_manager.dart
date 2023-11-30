@@ -154,19 +154,22 @@ class _SessionTimeoutManagerState extends State<SessionTimeoutManager>
       return;
     }
 
-    if (_userTapActivityRecordEnabled &&
-        widget._sessionConfig.invalidateSessionForUserInactivity != null) {
+    if (_userTapActivityRecordEnabled) {
       _userInactivityTimer?.cancel();
       _warningOfUserInactivityTimer?.cancel();
 
-      _userInactivityTimer = _setTimeout(
-            () => widget._sessionConfig.pushUserInactivityTimeout(),
-        duration: widget._sessionConfig.invalidateSessionForUserInactivity!,
-      );
-      _warningOfUserInactivityTimer = _setTimeout(
-            () => widget._sessionConfig.pushWarningOfUserInactivityTimeout(),
-        duration: widget._sessionConfig.warningForUserInactivity!,
-      );
+      if(widget._sessionConfig.invalidateSessionForUserInactivity != null) {
+        _userInactivityTimer = _setTimeout(
+              () => widget._sessionConfig.pushUserInactivityTimeout(),
+          duration: widget._sessionConfig.invalidateSessionForUserInactivity!,
+        );
+      }
+      if(widget._sessionConfig.warningForUserInactivity != null){
+        _warningOfUserInactivityTimer = _setTimeout(
+              () => widget._sessionConfig.pushWarningOfUserInactivityTimeout(),
+          duration: widget._sessionConfig.warningForUserInactivity!,
+        );
+      }
 
       /// lock the button for next [userActivityDebounceDuration] duration
       if (mounted) {
