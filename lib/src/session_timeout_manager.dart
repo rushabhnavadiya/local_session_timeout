@@ -37,14 +37,15 @@ class _SessionTimeoutManagerState extends State<SessionTimeoutManager>
     with WidgetsBindingObserver {
   Timer? _appLostFocusTimer;
   Timer? _userInactivityTimer;
-  bool _isListensing = false;
+  Timer? _warningOfUserInactivityTimer;
+  bool _isListening = false;
 
   bool _userTapActivityRecordEnabled = true;
   bool isHoverDetectionDisabled = false;
   bool isScrollDetectionDisabled = false;
 
   void _closeAllTimers() {
-    if (_isListensing == false) {
+    if (_isListening == false) {
       return;
     }
 
@@ -55,8 +56,12 @@ class _SessionTimeoutManagerState extends State<SessionTimeoutManager>
     if (_userInactivityTimer != null) {
       _clearTimeout(_userInactivityTimer!);
     }
+
+    if (_warningOfUserInactivityTimer != null) {
+      _clearTimeout(_warningOfUserInactivityTimer!);
+    }
     if (mounted) {
-      _isListensing = false;
+      _isListening = false;
       _userTapActivityRecordEnabled = true;
     }
   }
@@ -69,12 +74,12 @@ class _SessionTimeoutManagerState extends State<SessionTimeoutManager>
     // if there is no stream to handle enabling and disabling of SessionTimeoutManager,
     // we always listen
     if (widget._sessionStateStream == null) {
-      _isListensing = true;
+      _isListening = true;
     }
 
     widget._sessionStateStream?.listen((SessionState sessionState) {
       if (sessionState == SessionState.startListening && mounted) {
-        _isListensing = true;
+        _isListening = true;
 
         recordPointerEvent();
       } else if (sessionState == SessionState.stopListening) {
@@ -87,7 +92,7 @@ class _SessionTimeoutManagerState extends State<SessionTimeoutManager>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
 
-    if (_isListensing == true &&
+    if (_isListening == true &&
         (state == AppLifecycleState.inactive ||
             state == AppLifecycleState.paused)) {
       if (widget._sessionConfig.invalidateSessionForAppLostFocus != null) {
@@ -145,16 +150,22 @@ class _SessionTimeoutManagerState extends State<SessionTimeoutManager>
   }
 
   void recordPointerEvent() {
-    if (!_isListensing) {
+    if (!_isListening) {
       return;
     }
 
     if (_userTapActivityRecordEnabled &&
         widget._sessionConfig.invalidateSessionForUserInactivity != null) {
       _userInactivityTimer?.cancel();
+      _warningOfUserInactivityTimer?.cancel();
+
       _userInactivityTimer = _setTimeout(
             () => widget._sessionConfig.pushUserInactivityTimeout(),
         duration: widget._sessionConfig.invalidateSessionForUserInactivity!,
+      );
+      _warningOfUserInactivityTimer = _setTimeout(
+            () => widget._sessionConfig.pushWarningOfUserInactivityTimeout(),
+        duration: widget._sessionConfig.warningForUserInactivity!,
       );
 
       /// lock the button for next [userActivityDebounceDuration] duration
